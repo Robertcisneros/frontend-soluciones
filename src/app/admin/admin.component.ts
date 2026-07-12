@@ -16,6 +16,23 @@ import { HttpClient } from '@angular/common/http';
   styleUrls: ['./admin.component.css']
 })
 export class AdminComponent implements OnInit {
+        // ...existing code...
+
+        onCategoriaChartClick(event: any): void {
+          if (event && event.name) {
+            const cat = this.categories.find(c => c.nombre_categoria === event.name);
+            if (cat) {
+              this.categoriaSeleccionada = cat.id_categoria;
+              this.onCategoriaChange();
+            }
+          }
+        }
+
+        resetCategoriaSeleccionada(): void {
+          this.categoriaSeleccionada = 0;
+          this.productosPorCategoria = [];
+          this.productosChartOption = {};
+        }
       // Drilldown para granularidad de ventas
       mesDrilldown: number | null = null;
     ventasPorHora: any[] = [];
@@ -39,9 +56,30 @@ export class AdminComponent implements OnInit {
           // Ordenar por hora ascendente
           dataFiltrada = dataFiltrada.sort((a, b) => a.hora - b.hora);
           this.ventasPorHora = [...dataFiltrada];
+          // Generar tooltip con productos vendidos por hora
           this.ventasHoraChartOption = {
             title: { text: `Ventas por Hora - ${this.fechaSeleccionadaParaHoras}` , left: 'center' },
-            tooltip: { trigger: 'axis' },
+            tooltip: {
+              trigger: 'axis',
+              formatter: (params: any) => {
+                let tooltip = '';
+                if (Array.isArray(params)) {
+                  params.forEach(param => {
+                    const hora = param.axisValue;
+                    const venta = this.ventasPorHora.find(v => v.hora == hora);
+                    tooltip += `<b>${hora}:00</b><br/>Ventas: <b>${param.data}</b><br/>`;
+                    if (venta && venta.productos && venta.productos.length > 0) {
+                      tooltip += 'Productos:<ul style="margin:0 0 0 12px;padding:0;">';
+                      venta.productos.forEach((prod: any) => {
+                        tooltip += `<li>${prod.nombre} <span style='color:#888;'>x${prod.cantidad}</span></li>`;
+                      });
+                      tooltip += '</ul>';
+                    }
+                  });
+                }
+                return tooltip;
+              }
+            },
             xAxis: {
               type: 'category',
               data: dataFiltrada.map(item => item.hora)
@@ -262,9 +300,12 @@ export class AdminComponent implements OnInit {
       next: (data) => {
         this.resumenGeneral = data;
         try {
-          if (this.resumenGeneral && this.resumenGeneral.totalIngresos !== undefined) {
-            this.resumenGeneral.totalIngresos = Number(this.resumenGeneral.totalIngresos || 0);
+          // Si el backend no provee totalIngresos o es 0/null, calcularlo sumando ventasTotalAnio
+          let total = Number(this.resumenGeneral?.totalIngresos);
+          if (!total || isNaN(total)) {
+            total = (this.ventasTotalAnio || []).reduce((sum, item) => sum + (Number(item.valor) || 0), 0);
           }
+          this.resumenGeneral.totalIngresos = total;
         } catch (err) {
           console.error('Error al normalizar totalIngresos:', err);
         }

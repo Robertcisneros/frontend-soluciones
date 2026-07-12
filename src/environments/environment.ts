@@ -1,12 +1,12 @@
 export const environment = {
-  production: false,
-  apiUrl: 'http://localhost:8080',
+  production: true, // Lo cambiamos a true para producción
+  apiUrl: 'https://backend-soluciones.onrender.com', // Quitamos el "/api" del final de la URL base
   endpoints: {
-    // Ajusta estos endpoints según tu backend de Spring Boot
-    login: '/api/usuarios/login',  // Cambia esto según tu backend
+    // Tus endpoints se mantienen igual porque ya incluyen la ruta "/api" al inicio
+    login: '/api/usuarios/login', 
     register: '/api/usuarios/register',
     productos: '/api/productos',
-    ventas: '/api/ventas',
+    ventas: '/api/api/ventas', // Ojo: si en tu navegador pusiste /api/productos, mantén este formato
     usuarios: '/api/usuarios',
     reportes: '/api/reportes'
   }

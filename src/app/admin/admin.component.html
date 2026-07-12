@@ -132,6 +132,21 @@
                   <div class="chart-container">
                     <div echarts [options]="ventasHoraChartOption" class="echart-container"></div>
                   </div>
+                  <!-- Lista de productos vendidos por hora -->
+                  <div *ngIf="ventasPorHora.length > 0" class="productos-hora-list" style="margin-top:18px;">
+                    <h4 style="margin-bottom:8px; color:#2563eb; font-size:1.08em;">Productos vendidos por hora</h4>
+                    <div *ngFor="let v of ventasPorHora">
+                      <div style="margin-bottom:6px;">
+                        <b>{{ v.hora }}:00</b> - Ventas: <b>{{ v.valor }}</b>
+                        <span *ngIf="v.productos && v.productos.length > 0">
+                          <ul style="margin:0 0 0 18px; padding:0; display:inline-block;">
+                            <li *ngFor="let p of v.productos">{{ p.nombre }} <span style="color:#888;">x{{ p.cantidad }}</span></li>
+                          </ul>
+                        </span>
+                        <span *ngIf="!v.productos || v.productos.length === 0" style="color:#888;">(Sin detalle de productos)</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
         <!-- Inventario por Categoría -->
         <div class="dashboard-section" *ngIf="inventarioChartOption && inventarioChartOption.series">
@@ -215,28 +230,20 @@
         </div>
 
         <!-- Categorías, Productos por categoría y Pagos -->
-        <div class="dashboard-section" *ngIf="categoriaMasVendida.length > 0">
-          <h3>🏆 Categorías Más Vendidas</h3>
-          <div class="chart-container">
-            <div echarts [options]="categoriasChartOption" class="echart-container"></div>
-          </div>
-        </div>
 
-        <div class="dashboard-section">
-          <h3>🎯 Productos Más Vendidos por Categoría</h3>
-          <div class="filter-row">
-            <label>
-              Categoría:
-              <select [(ngModel)]="categoriaSeleccionada" (change)="onCategoriaChange()">
-                <option [value]="0">Selecciona una categoría</option>
-                <option *ngFor="let cat of categories" [value]="cat.id_categoria">{{ cat.nombre_categoria }}</option>
-              </select>
-            </label>
+        <div class="dashboard-section" *ngIf="categoriaMasVendida.length > 0">
+          <h3>🏆 Categorías y Productos Más Vendidos</h3>
+          <div class="chart-container">
+            <div echarts [options]="categoriasChartOption" class="echart-container" (chartClick)="onCategoriaChartClick($event)"></div>
           </div>
-          <div class="chart-container" *ngIf="productosPorCategoria.length > 0">
-            <div echarts [options]="productosChartOption" class="echart-container"></div>
+          <div *ngIf="productosPorCategoria.length > 0 && categoriaSeleccionada > 0" style="margin-top:24px;">
+            <h4 style="color:#2563eb; margin-bottom:8px;">Top productos de <span style="font-weight:600;">{{ getCategoryName(categoriaSeleccionada) }}</span></h4>
+            <div class="chart-container">
+              <div echarts [options]="productosChartOption" class="echart-container"></div>
+            </div>
+            <p class="empty-state" *ngIf="productosPorCategoria.length === 0">No hay productos vendidos en esta categoría</p>
+            <button class="btn-cancel" style="margin-top:12px;" (click)="resetCategoriaSeleccionada()">Volver a categorías</button>
           </div>
-          <p class="empty-state" *ngIf="categoriaSeleccionada > 0 && productosPorCategoria.length === 0">No hay productos vendidos en esta categoría</p>
         </div>
 
         <div class="dashboard-section" *ngIf="formaPagoMasUsada.length > 0">
@@ -263,6 +270,26 @@
       <div style="width:100%; min-height:380px; background:transparent;">
         <div class="dashboard-section metas-card" style="width:100%; max-width:1100px; margin:0 auto; background:#f8fafc; border-radius:20px; box-shadow:0 4px 24px #0001; padding:36px 32px; text-align:center;">
           <h3 style="margin-top:0; margin-bottom:28px; font-size:1.5em; letter-spacing:0.5px; color:#374151;">🎯 Metas de Ventas</h3>
+          <!-- Alertas de meta semanal -->
+          <div *ngIf="porcentajeSemana < 50" style="background:#fee2e2; color:#b91c1c; border-left:5px solid #ef4444; border-radius:8px; padding:10px 18px; margin-bottom:18px; font-weight:600; max-width:420px; margin:0 auto 18px auto;">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right:8px;"></i> Muy lejos de la meta semanal. ¡Aumenta las ventas!
+          </div>
+          <div *ngIf="porcentajeSemana >= 50 && porcentajeSemana < 80" style="background:#fef9c3; color:#b45309; border-left:5px solid #f59e0b; border-radius:8px; padding:10px 18px; margin-bottom:18px; font-weight:600; max-width:420px; margin:0 auto 18px auto;">
+            <i class="fa-solid fa-hourglass-half" style="margin-right:8px;"></i> Vas a mitad de la meta semanal. ¡Sigue así!
+          </div>
+          <div *ngIf="porcentajeSemana >= 80 && porcentajeSemana < 100" style="background:#d1fae5; color:#047857; border-left:5px solid #10b981; border-radius:8px; padding:10px 18px; margin-bottom:18px; font-weight:600; max-width:420px; margin:0 auto 18px auto;">
+            <i class="fa-solid fa-bullseye" style="margin-right:8px;"></i> ¡Estás muy cerca de cumplir la meta semanal!
+          </div>
+          <!-- Alertas de meta mensual -->
+          <div *ngIf="porcentajeMes < 50" style="background:#fee2e2; color:#b91c1c; border-left:5px solid #ef4444; border-radius:8px; padding:10px 18px; margin-bottom:18px; font-weight:600; max-width:420px; margin:0 auto 18px auto;">
+            <i class="fa-solid fa-triangle-exclamation" style="margin-right:8px;"></i> Muy lejos de la meta mensual. ¡Aumenta las ventas!
+          </div>
+          <div *ngIf="porcentajeMes >= 50 && porcentajeMes < 80" style="background:#fef9c3; color:#b45309; border-left:5px solid #f59e0b; border-radius:8px; padding:10px 18px; margin-bottom:18px; font-weight:600; max-width:420px; margin:0 auto 18px auto;">
+            <i class="fa-solid fa-hourglass-half" style="margin-right:8px;"></i> Vas a mitad de la meta mensual. ¡Sigue así!
+          </div>
+          <div *ngIf="porcentajeMes >= 80 && porcentajeMes < 100" style="background:#dbeafe; color:#1d4ed8; border-left:5px solid #3b82f6; border-radius:8px; padding:10px 18px; margin-bottom:18px; font-weight:600; max-width:420px; margin:0 auto 18px auto;">
+            <i class="fa-solid fa-bullseye" style="margin-right:8px;"></i> ¡Estás muy cerca de cumplir la meta mensual!
+          </div>
           <div style="display:flex; flex-wrap:wrap; gap:36px; justify-content:center; align-items:stretch; width:100%;">
             <!-- Meta Semanal -->
             <div style="flex:1 1 320px; min-width:300px; max-width:420px; background:#fff; border-radius:14px; box-shadow:0 1px 6px #0001; padding:22px 18px 18px 18px; margin-bottom:0; display:flex; flex-direction:column; align-items:center;">
