@@ -7,6 +7,7 @@ import { CartService, CartItem } from '../services/cart.service';
 import { FacturaService, VentaRequest } from '../services/factura.service';
 import { NavBarComponent } from '../components/nav-bar/nav-bar.component';
 import { FooterComponent } from '../components/footer/footer.component';
+import { environment } from '../../environments/environment';
 
 @Component({
   selector: 'app-cart',
@@ -227,7 +228,7 @@ export class Cart implements OnInit, OnDestroy {
     console.log('Número de items en detalles:', ventaRequest.detalles.length);
 
     // Enviar venta al backend
-    this.http.post<any>('http://localhost:8080/api/ventas/registrar-venta', ventaRequest).subscribe({
+    this.http.post<any>(`${environment.apiUrl}/api/ventas/registrar-venta`, ventaRequest).subscribe({
       next: (response) => {
         console.log('✅ Venta creada exitosamente:', response);
         this.procesarVentaExitosa(response);
@@ -393,7 +394,7 @@ export class Cart implements OnInit, OnDestroy {
   descargarFacturaPDF(idFactura: number): void {
     console.log('=== INICIANDO DESCARGA DE PDF ===');
     console.log('ID Factura:', idFactura);
-    console.log('URL:', `http://localhost:8080/api/facturas/${idFactura}/pdf`);
+    console.log('URL:', `${environment.apiUrl}/api/facturas/${idFactura}/pdf`);
     
     this.facturaService.descargarFacturaPDF(idFactura).subscribe({
       next: (blob) => {
