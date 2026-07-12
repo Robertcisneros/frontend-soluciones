@@ -4,6 +4,8 @@ import { Router } from '@angular/router';
 import { HttpClient } from '@angular/common/http';
 import { NavBarComponent } from '../components/nav-bar/nav-bar.component';
 import { FooterComponent } from '../components/footer/footer.component';
+import { environment } from '../../environments/environment';
+
 
 interface Venta {
   id: number;
@@ -60,7 +62,7 @@ export class HistorialComponent implements OnInit {
   cargarHistorial(): void {
     this.cargando = true;
     // Usar endpoint correcto: /api/ventas/cliente/{idCliente}
-    this.http.get<any[]>(`http://localhost:8080/api/ventas/cliente/${this.usuarioId}`)
+    this.http.get<any[]>(`${environment.apiUrl}/api/ventas/cliente/${this.usuarioId}`)
       .subscribe({
         next: (ventas) => {
           console.log('Ventas recibidas:', ventas);
@@ -85,7 +87,7 @@ export class HistorialComponent implements OnInit {
 
   cargarFactura(ventaId: number): void {
     // Usar endpoint disponible: /api/ventas/factura/{idVenta}
-    this.http.get<FacturaInfo>(`http://localhost:8080/api/ventas/factura/${ventaId}`)
+    this.http.get<FacturaInfo>(`${environment.apiUrl}/api/ventas/factura/${ventaId}`)
       .subscribe({
         next: (factura) => {
           console.log(`Factura para venta ${ventaId}:`, factura);
@@ -107,9 +109,9 @@ export class HistorialComponent implements OnInit {
 
     console.log('=== DESCARGANDO FACTURA ===');
     console.log('ID Factura:', factura.id);
-    console.log('URL:', `http://localhost:8080/api/facturas/${factura.id}/pdf`);
+    console.log('URL:', `${environment.apiUrl}/api/facturas/${factura.id}/pdf`);
 
-    this.http.get(`http://localhost:8080/api/facturas/${factura.id}/pdf`, {
+    this.http.get(`${environment.apiUrl}/api/facturas/${factura.id}/pdf`, {
       responseType: 'blob'
     }).subscribe({
       next: (blob) => {
