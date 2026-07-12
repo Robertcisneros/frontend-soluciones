@@ -66,14 +66,21 @@ export class HistorialComponent implements OnInit {
       .subscribe({
         next: (ventas) => {
           console.log('Ventas recibidas:', ventas);
-          this.ventas = ventas.sort((a, b) => 
-            new Date(b.fecha_venta).getTime() - new Date(a.fecha_venta).getTime()
-          );
+          // Cambia tu bloque .sort para que sea tolerante a ambas nomenclaturas:
+          this.ventas = ventas.sort((a, b) => {
+            const fechaB = b.fecha_venta || b.fechaVenta;
+            const fechaA = a.fecha_venta || a.fechaVenta;
+            return new Date(fechaB).getTime() - new Date(fechaA).getTime();
+          });
           
           // Cargar información de facturas para cada venta usando endpoint disponible
           this.ventas.forEach(venta => {
-            this.cargarFactura(venta.id);
-          });
+          // Asegura capturar idVenta, id_venta o id según lo devuelva el backend
+            const idReal = (venta as any).idVenta || (venta as any).id_venta || venta.id;
+            if (idReal) {
+              this.cargarFactura(idReal);
+            }
+            });
           
           this.cargando = false;
         },
